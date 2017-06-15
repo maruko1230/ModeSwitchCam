@@ -15,4 +15,9 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <include
+        android:id="@+id/viewfinder_layout"
+        layout="@layout/layout_main_camera"
+        />
+
 </android.support.constraint.ConstraintLayout>
