@@ -2,8 +2,10 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/ModeSwitchingCamera.iml" filepath="$PROJECT_DIR$/ModeSwitchingCamera.iml" />
+      <module fileurl="file://$PROJECT_DIR$/ModeSwitchCam.iml" filepath="$PROJECT_DIR$/ModeSwitchCam.iml" />
+      <module fileurl="file://C:\androidWorkspace\ModeSwitchCam\ModeSwitchingCamera.iml" filepath="C:\androidWorkspace\ModeSwitchCam\ModeSwitchingCamera.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://C:\androidWorkspace\ModeSwitchCam\app\app.iml" filepath="C:\androidWorkspace\ModeSwitchCam\app\app.iml" />
     </modules>
   </component>
 </project>

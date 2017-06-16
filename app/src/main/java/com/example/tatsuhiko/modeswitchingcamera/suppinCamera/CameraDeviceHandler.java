@@ -3,7 +3,9 @@ package com.example.tatsuhiko.modeswitchingcamera.suppinCamera;
 import android.content.Context;
 import android.graphics.Camera;
 import android.graphics.ImageFormat;
+import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
@@ -109,7 +111,7 @@ public class CameraDeviceHandler {
             mPlatformCapability = new PlatformCapability();
         }
         mCameraId = mPlatformCapability.getCameraIdForMain();
-        mPlatformCapability.getPreviewSize(mCameraId);
+        configureTransform(width, height);
 
         try {
             cameraManager.openCamera(mCameraId, mCameraStateCallback, mBackgroundThreadHandler);
@@ -118,6 +120,37 @@ public class CameraDeviceHandler {
         } catch (CameraAccessException e) {
             Log.e(TAG, "CameraAccessException");
         }
+    }
+
+    /**
+     * Configures the necessary {@link android.graphics.Matrix} transformation to `mTextureView`.
+     * This method should be called after the camera preview size is determined in
+     * setUpCameraOutputs and also the size of `mTextureView` is fixed.
+     *
+     * @param viewWidth  The width of `mTextureView`
+     * @param viewHeight The height of `mTextureView`
+     */
+    private void configureTransform(int viewWidth, int viewHeight) {
+
+        Size mPreviewSize = mPlatformCapability.getPreviewSize(mCameraId);
+
+        Matrix matrix = new Matrix();
+        RectF viewRect = new RectF(0, 0, viewWidth, viewHeight);
+        RectF bufferRect = new RectF(0, 0, mPreviewSize.getHeight(), mPreviewSize.getWidth());
+        float centerX = viewRect.centerX();
+        float centerY = viewRect.centerY();
+        if (Surface.ROTATION_90 == mDisplayOrientation || Surface.ROTATION_270 == mDisplayOrientation) {
+            bufferRect.offset(centerX - bufferRect.centerX(), centerY - bufferRect.centerY());
+            matrix.setRectToRect(viewRect, bufferRect, Matrix.ScaleToFit.FILL);
+            float scale = Math.max(
+                    (float) viewHeight / mPreviewSize.getHeight(),
+                    (float) viewWidth / mPreviewSize.getWidth());
+            matrix.postScale(scale, scale, centerX, centerY);
+            matrix.postRotate(90 * (mDisplayOrientation - 2), centerX, centerY);
+        } else if (Surface.ROTATION_180 == mDisplayOrientation) {
+            matrix.postRotate(180, centerX, centerY);
+        }
+        mViewFinderTextureView.setTransform(matrix);
     }
 
     private class PlatformCapability {
@@ -163,38 +196,60 @@ public class CameraDeviceHandler {
             int sensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
 
             boolean swapDimension = false;
+
+            Log.e(TAG, "DimensionSwap condition: sensorOrientation = " + sensorOrientation
+                    + "/Display orientation = " + mDisplayOrientation);
+
             switch (mDisplayOrientation) {
                 case Surface.ROTATION_0:
                 case Surface.ROTATION_180:
                     if (sensorOrientation == 90  || sensorOrientation == 270) {
+                        Log.e(TAG, "Swap!");
                         swapDimension = true;
                     }
                     break;
                 case Surface.ROTATION_90:
                 case Surface.ROTATION_270:
                     if (sensorOrientation == 0 || sensorOrientation == 180) {
+                        Log.e(TAG, "Swap!");
                         swapDimension = true;
                     }
                     break;
             }
 
+            Size preferredPreviewSize = new Size(720,1280);
+
+//            for(Size size: map.getOutputSizes(ImageFormat.JPEG)) {
+//                Log.e(TAG, "Supporting JPG SIZE = " + size.getWidth() + "x" + size.getHeight());
+//                if (!swapDimension) {
+//                    if(size.getWidth() == preferredPreviewSize.getWidth()
+//                            && size.getHeight() == preferredPreviewSize.getHeight()) {
+//                        Log.e(TAG, "720p is supported");
+//                        return size;
+//                    }
+//                } else {
+//                    if(size.getWidth() == preferredPreviewSize.getHeight()
+//                            && size.getHeight() == preferredPreviewSize.getWidth()) {
+//                        Log.e(TAG, "720p is supported");
+//                        return size;
+//                    }
+//                }
+//            }
+
             for(Size size: map.getOutputSizes(ImageFormat.JPEG)) {
                 Log.e(TAG, "Supporting JPG SIZE = " + size.getWidth() + "x" + size.getHeight());
-                //TODO: Size is fixed to 640 due to sim. specification
-                if (!swapDimension) {
-                    if(size.getWidth() == 480 && size.getHeight() == 640) {
-                        Log.e(TAG, "720p is supported");
+                if(size.getWidth() == preferredPreviewSize.getHeight()
+                        && size.getHeight() == preferredPreviewSize.getWidth()) {
+                    Log.e(TAG, "720p is supported");
+
+                    if (!swapDimension) {
                         return size;
-                    }
-                } else {
-                    if(size.getWidth() == 640 && size.getHeight() == 480) {
-                        Log.e(TAG, "720p is supported");
-                        return size;
+                    } else {
+                        return new Size(size.getHeight(), size.getWidth());
                     }
                 }
-
-
             }
+
             Log.e(TAG, "720p is not supported");
             return null;
         }
@@ -230,8 +285,8 @@ public class CameraDeviceHandler {
         assert texture != null;
 
         Size previewSize = mPlatformCapability.getPreviewSize(mCameraId);
+        Log.e(TAG, "returning size = " + previewSize.getWidth() + "x" + previewSize.getHeight());
         texture.setDefaultBufferSize(previewSize.getWidth(), previewSize.getHeight());
-
         Surface surface = new Surface(texture);
 
         try {
@@ -295,6 +350,7 @@ public class CameraDeviceHandler {
                 @Override
                 public void onSurfaceTextureSizeChanged(SurfaceTexture surfaceTexture, int width, int height) {
                     Log.e(TAG, "onSurfaceTextureSizeChanged: size: " + width + " x " + height);
+                    configureTransform(width, height);
                 }
 
                 @Override

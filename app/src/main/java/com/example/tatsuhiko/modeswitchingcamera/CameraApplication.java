@@ -16,7 +16,7 @@ public class CameraApplication extends Application {
 
     public CameraApplication() {
         super();
-       mContext = this;
+        mContext = this;
     }
 
     @Override
