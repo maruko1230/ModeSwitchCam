@@ -1,12 +1,14 @@
 package com.example.tatsuhiko.modeswitchingcamera;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.hardware.camera2.CameraDevice;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.TextureView;
 import android.view.View;
 import android.view.Window;
@@ -14,7 +16,10 @@ import android.view.WindowManager;
 
 import com.example.tatsuhiko.modeswitchingcamera.suppinCamera.CameraDeviceHandler;
 
+
 public class CameraActivity extends Activity {
+
+    private static final String TAG = "CameraActivity";
 
     private TextureView mCameraViewfinder;
 
@@ -44,12 +49,15 @@ public class CameraActivity extends Activity {
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
+        Log.e(TAG, "Configuration changed");
         if (Configuration.ORIENTATION_UNDEFINED == newConfig.orientation) {
             return;
         }
         super.onConfigurationChanged(newConfig);
+
         if(mCameraDeviceHandler != null) {
-//            mCameraDeviceHandler.setDisplayOrientation(newConfig.orientation);
+            int rotation = ((WindowManager)getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getRotation();
+            mCameraDeviceHandler.setDisplayOrientation(rotation);
         }
     }
 
@@ -65,7 +73,7 @@ public class CameraActivity extends Activity {
         win.getAttributes().rotationAnimation = (seamless) ?
                 3 /* ROTATION_ANIMATION_SEAMLESS*/ :
                 WindowManager.LayoutParams.ROTATION_ANIMATION_JUMPCUT;
-        win.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE);
+        win.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
         //Setting null drawable causes aliasing artifacts on button borders. Transparent instead
         win.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
     }
