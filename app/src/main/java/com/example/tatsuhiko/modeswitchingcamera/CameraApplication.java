@@ -10,7 +10,7 @@ import android.util.Log;
 
 public class CameraApplication extends Application {
 
-    private static final String TAG = "CameraApplication";
+    private static final String TAG = "XXXXX CameraApp";
 
     private static Context mContext;
 
