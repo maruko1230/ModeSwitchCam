@@ -38,7 +38,7 @@ import java.util.Map;
 
 public class CameraDeviceHandler {
 
-    private static final String TAG = "CameraDeviceHandler";
+    private static final String TAG = "XXXXX CDH";
 
     private CameraDevice mCamera;
     private HandlerThread mBackgroundThread;
@@ -133,6 +133,7 @@ public class CameraDeviceHandler {
     private void configureTransform(int viewWidth, int viewHeight) {
 
         Size mPreviewSize = mPlatformCapability.getPreviewSize(mCameraId);
+        Log.e(TAG, "configureTransform: size = " + mPreviewSize.getWidth() + "x" + mPreviewSize.getHeight());
 
         Matrix matrix = new Matrix();
         RectF viewRect = new RectF(0, 0, viewWidth, viewHeight);
@@ -155,7 +156,7 @@ public class CameraDeviceHandler {
 
     private class PlatformCapability {
 
-        private static final String TAG = "PlatformCapability";
+        private static final String TAG = "XXXXX PFCapability";
 
         private final Map<String, CameraCharacteristics> capabilityMap = new HashMap<>();
         private final List<String> cameraIdList = new ArrayList<>();
@@ -190,8 +191,10 @@ public class CameraDeviceHandler {
         }
 
         public Size getPreviewSize(String cameraId) {
+            Log.e(TAG, "CameraID = " + cameraId);
             CameraCharacteristics characteristics = getCharacteristics(cameraId);
             StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+
 
             int sensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
 
@@ -217,26 +220,9 @@ public class CameraDeviceHandler {
                     break;
             }
 
-            Size preferredPreviewSize = new Size(720,1280);
+            Size preferredPreviewSize = new Size(1080,1920);
 
-//            for(Size size: map.getOutputSizes(ImageFormat.JPEG)) {
-//                Log.e(TAG, "Supporting JPG SIZE = " + size.getWidth() + "x" + size.getHeight());
-//                if (!swapDimension) {
-//                    if(size.getWidth() == preferredPreviewSize.getWidth()
-//                            && size.getHeight() == preferredPreviewSize.getHeight()) {
-//                        Log.e(TAG, "720p is supported");
-//                        return size;
-//                    }
-//                } else {
-//                    if(size.getWidth() == preferredPreviewSize.getHeight()
-//                            && size.getHeight() == preferredPreviewSize.getWidth()) {
-//                        Log.e(TAG, "720p is supported");
-//                        return size;
-//                    }
-//                }
-//            }
-
-            for(Size size: map.getOutputSizes(ImageFormat.JPEG)) {
+            for(Size size: map.getOutputSizes(ImageFormat.PRIVATE)) {
                 Log.e(TAG, "Supporting JPG SIZE = " + size.getWidth() + "x" + size.getHeight());
                 if(size.getWidth() == preferredPreviewSize.getHeight()
                         && size.getHeight() == preferredPreviewSize.getWidth()) {
@@ -258,6 +244,22 @@ public class CameraDeviceHandler {
             return capabilityMap.get(id);
         }
     }
+
+
+    enum AspectRatio {
+        SIXTEEN_NINE(16,9),
+        FOUR_THREE(4,3),
+        ;
+
+        AspectRatio(int width, int height) {
+            this.width = width;
+            this.height = height;
+        }
+
+        int width;
+        int height;
+    }
+
 
     private final CameraDevice.StateCallback mCameraStateCallback =
             new CameraDevice.StateCallback() {
